@@ -23,18 +23,22 @@ require(splines)
 
 #boxplots for all the categorical variables
 par(mfrow=c(2,3))
+#attacker=1,midfielders=2,defenders=3,goalkeepers=4
 boxplot(epl$market_value~epl$position_cat)
+#Plays for top 6 clubs. (Arsenal,Chelsea,Liverpool,Manchester City,Manchester United,Tottenham)
 boxplot(epl$market_value~epl$big_club)
+#what region in the world the player is from 1=England, 2=Rest of EU, 3=Americas, 4= Rest of World
 boxplot(epl$market_value~epl$region)
+#Used to play in a different (foreign) league
 boxplot(epl$market_value~epl$new_foreign)
+#Whether or not the player is a new signing (12 month playing or less)
 boxplot(epl$market_value~epl$new_signing)
 #plot + cubic spline for the ages column
-plot(epl$age,epl$market_value)
-
 age.spline=lm(market_value~ns(age,4),epl)
 x=seq(min(epl$age),max(epl$age),length=100)
 y=predict(age.spline,newdata=data.frame(age=x),se=T)
 
+plot(epl$age,epl$market_value)
 lines(x,y$fit,lwd=2)
 lines(x,y$fit+2*y$se.fit,lty='dotted')
 lines(x,y$fit-2*y$se.fit,lty='dotted')
