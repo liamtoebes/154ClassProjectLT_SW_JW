@@ -1,6 +1,6 @@
 epl=data.frame(read.csv("C:/Users/liamt/OneDrive/Documents/College/STAT154/Group Project/epldata_final.csv"))
 
-head(epl)
+#deleting unwanted columns
 epl$name=NULL
 epl$club=NULL
 epl$position=NULL
@@ -24,21 +24,21 @@ require(splines)
 #boxplots for all the categorical variables
 par(mfrow=c(2,3))
 #attacker=1,midfielders=2,defenders=3,goalkeepers=4
-boxplot(epl$market_value~epl$position_cat)
+boxplot(epl$market_value~epl$position_cat,xlab='Player Nationality',ylab='Market Value (,000,000£)',names=c('Attacker','Midfielder','Defender','Goalkeeper'))
 #Plays for top 6 clubs. (Arsenal,Chelsea,Liverpool,Manchester City,Manchester United,Tottenham)
-boxplot(epl$market_value~epl$big_club)
+boxplot(epl$market_value~epl$big_club,xlab='Club Prestige',ylab='Market Value (,000,000£)',names=c('Big Club','Non-Big Club'))
 #what region in the world the player is from 1=England, 2=Rest of EU, 3=Americas, 4= Rest of World
-boxplot(epl$market_value~epl$region)
+boxplot(epl$market_value~epl$region,xlab='Player Nationality',ylab='Market Value (,000,000£)',names=c('England','EU','Americas','Rest of World'))
 #Used to play in a different (foreign) league
-boxplot(epl$market_value~epl$new_foreign)
+boxplot(epl$market_value~epl$new_foreign,xlab='New Player from Foreign League',ylab='Market Value (,000,000£)',names=c('No','Yes'))
 #Whether or not the player is a new signing (12 month playing or less)
-boxplot(epl$market_value~epl$new_signing)
+boxplot(epl$market_value~epl$new_signing,ylab='Market Value (,000,000£)',names=c('Old Signing','New Signing'))
 #plot + cubic spline for the ages column
 age.spline=lm(market_value~ns(age,4),epl)
 x=seq(min(epl$age),max(epl$age),length=100)
 y=predict(age.spline,newdata=data.frame(age=x),se=T)
 
-plot(epl$age,epl$market_value)
+plot(epl$age,epl$market_value,xlab='Player Age',ylab='Market Value (,000,000£)')
 lines(x,y$fit,lwd=2)
 lines(x,y$fit+2*y$se.fit,lty='dotted')
 lines(x,y$fit-2*y$se.fit,lty='dotted')
@@ -79,7 +79,7 @@ train.index
 train=epl[train.index,]
 test=epl[-train.index,]
 par(mfrow=c(2,2))
-epl.tree =tree(market_value~age+factor(position_cat)+factor(region)+factor(big_club)+factor(new_signing)+factor(new_foreign),train )
+epl.tree =tree(market_value~age+position_cat+region+big_club+new_signing+new_foreign,train )
 summary(epl.tree)
 
 plot(epl.tree)
@@ -89,11 +89,16 @@ cv.epl=cv.tree(epl.tree)
 plot(cv.epl$size,cv.epl$dev,type='b')
 
 prune.epl=prune.tree(epl.tree,best=8)
-plot(prune.epl)
-text(prune.epl,pretty=1)
 
+plot(prune.epl)
+text(prune.epl,pretty=0)
+
+#initial tree test MSE
 mean((test$market_value-predict(epl.tree,newdata=test))^2)
+
+#pruned tree test MSE
 mean((test$market_value-predict(prune.epl,newdata=test))^2)
 
+#no learning benchmark ybar= mean of y in training data
 mean((test$market_value-mean(train$market_value))^2)
 
