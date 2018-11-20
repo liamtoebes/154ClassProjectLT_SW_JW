@@ -17,8 +17,6 @@ epl=na.omit(epl)
 factors=c('position_cat','region','big_club','new_signing','new_foreign')
 epl[factors] <- lapply(epl[factors] , factor)
 
-summary(epl.lmfit)
-
 require(splines)
 
 #boxplots for all the categorical variables
