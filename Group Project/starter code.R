@@ -69,6 +69,11 @@ epl.forwardfit2=lm(market_value~big_club+ns(age,3)+position_cat+new_signing,data
 
 summary(epl.forwardfit2)
 
+#checking normality of the residuals
+par(mfrow=c(1,2))
+qqnorm(epl.forwardfit2$resid)
+qqline(epl.forwardfit2$resid)
+hist(resid(epl.forwardfit2))
 
 library(tree)
 
