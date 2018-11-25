@@ -24,22 +24,30 @@ par(mfrow=c(2,3))
 #attacker=1,midfielders=2,defenders=3,goalkeepers=4
 boxplot(epl$market_value~epl$position_cat,xlab='Player Nationality',ylab='Market Value (,000,000£)',names=c('Attacker','Midfielder','Defender','Goalkeeper'))
 #Plays for top 6 clubs. (Arsenal,Chelsea,Liverpool,Manchester City,Manchester United,Tottenham)
-boxplot(epl$market_value~epl$big_club,xlab='Club Prestige',ylab='Market Value (,000,000£)',names=c('Big Club','Non-Big Club'))
+boxplot(epl$market_value~epl$big_club,xlab='Club Prestige',ylab='Market Value (,000,000£)',names=c('Non-Big Club','Big Club'))
 #what region in the world the player is from 1=England, 2=Rest of EU, 3=Americas, 4= Rest of World
 boxplot(epl$market_value~epl$region,xlab='Player Nationality',ylab='Market Value (,000,000£)',names=c('England','EU','Americas','Rest of World'))
 #Used to play in a different (foreign) league
 boxplot(epl$market_value~epl$new_foreign,xlab='New Player from Foreign League',ylab='Market Value (,000,000£)',names=c('No','Yes'))
 #Whether or not the player is a new signing (12 month playing or less)
 boxplot(epl$market_value~epl$new_signing,ylab='Market Value (,000,000£)',names=c('Old Signing','New Signing'))
-#plot + cubic spline for the ages column
-age.spline=lm(market_value~ns(age,4),epl)
-x=seq(min(epl$age),max(epl$age),length=100)
-y=predict(age.spline,newdata=data.frame(age=x),se=T)
-
+#plot the ages column
 plot(epl$age,epl$market_value,xlab='Player Age',ylab='Market Value (,000,000£)')
-lines(x,y$fit,lwd=2)
-lines(x,y$fit+2*y$se.fit,lty='dotted')
-lines(x,y$fit-2*y$se.fit,lty='dotted')
+quantile(epl$age)
+
+age.nspline=lm(market_value~ns(age,4),epl)
+age.cspline=lm(market_value~bs(age,knots=c(24,27,30)),epl)
+x=seq(min(epl$age),max(epl$age),length=100)
+y.ns=predict(age.nspline,newdata=data.frame(age=x),se=T)
+y.cs=predict(age.cspline,newdata=data.frame(age=x),se=T)
+y.smooth=smooth.spline(epl$age,epl$market_value,df=4)
+par(mfrow=c(1,1))
+plot(epl$age,epl$market_value,xlab='Player Age',ylab='Market Value (,000,000£)')
+lines(x,y.ns$fit,lwd=2)
+lines(x,y.ns$fit+2*y$se.fit,lty='dotted')
+lines(x,y.ns$fit-2*y$se.fit,lty='dotted')
+lines(x,y.cs$fit,col='green',lwd=2)
+lines(y.smooth,col='red',lwd=2)
 
 #linear model with forward/backward selection with age as linear term
 epl.lmfit1=lm(market_value~age+position_cat+region+big_club+new_signing+new_foreign,epl)
@@ -54,6 +62,12 @@ step(end.model1, scope=list(lower=start.model1,upper=end.model1),direction="back
 epl.forwardfit1=lm(market_value~big_club+position_cat+new_signing+new_foreign,data=epl)
 summary(epl.forwardfit1)
 
+par(mfrow=c(2,2))
+qqnorm(epl.forwardfit1$resid)
+qqline(epl.forwardfit1$resid)
+hist(resid(epl.forwardfit1))
+plot(fitted(epl.forwardfit1),resid(epl.forwardfit1))
+abline(0,0)
 #linear model with forward/backward selection with splines for age term
 epl.lmfit2=lm(market_value~ns(age,3)+position_cat+region+big_club+new_signing+new_foreign,epl)
 summary(epl.lmfit2)
@@ -70,10 +84,11 @@ epl.forwardfit2=lm(market_value~big_club+ns(age,3)+position_cat+new_signing,data
 summary(epl.forwardfit2)
 
 #checking normality of the residuals
-par(mfrow=c(1,2))
+par(mfrow=c(2,2))
 qqnorm(epl.forwardfit2$resid)
 qqline(epl.forwardfit2$resid)
 hist(resid(epl.forwardfit2))
+plot(fitted(epl.forwardfit2),resid(epl.forwardfit2))
 
 library(tree)
 
